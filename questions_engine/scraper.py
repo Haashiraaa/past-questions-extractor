@@ -6,6 +6,7 @@ import logging
 import requests
 from bs4 import BeautifulSoup
 from typing import List, Dict, Union, Optional, Tuple
+from datetime import datetime
 from haashi_pkg.utility import Logger
 from questions_engine.subjects import Subjects
 
@@ -60,10 +61,11 @@ class MySchoolNGScraper:
             )
 
         try:
-            if int(exam_year) < 1989 or int(exam_year) > 2025:
+            current_year = datetime.now().year
+            if int(exam_year) < 1989 or int(exam_year) > current_year:
                 raise ValueError(
                     f"Invalid exam year: {exam_year}! "
-                    "Exam year must be between 1989 and 2025"
+                    f"Exam year must be between 1989 and {current_year}"
                 )
         except ValueError:
             raise TypeError(
@@ -80,6 +82,7 @@ class MySchoolNGScraper:
         question_type: str = "theory"
     ) -> QuestionLike:
 
+        self.stored_questions = []
         subject, exam_year, exam_type, question_type = self._validate(
             subject=subject,
             exam_year=exam_year,
