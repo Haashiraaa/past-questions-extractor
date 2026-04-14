@@ -5,7 +5,7 @@
 import logging
 import requests
 from bs4 import BeautifulSoup
-from typing import List, Dict, Union, Optional
+from typing import List, Dict, Union, Optional, Tuple
 from haashi_pkg.utility import Logger
 from questions_engine.subjects import Subjects
 
@@ -34,7 +34,7 @@ class MySchoolNGScraper:
         exam_year: str,
         exam_type: str,
         question_type: str
-    ) -> Optional[bool]:
+    ) -> Tuple[str, ...]:
 
         if not any([subject, exam_type, exam_year, question_type]):
             raise ValueError(
@@ -47,7 +47,30 @@ class MySchoolNGScraper:
         ):
             raise ValueError(f"Invalid subject: {subject}!")
 
-        return True
+        if question_type.lower() not in [
+            "all", "theory", "practical", "objective"
+        ]:
+            raise ValueError(
+                f"Invalid question type: {question_type}!"
+            )
+
+        if exam_type.lower() not in ["all", "jamb", "waec", "neco"]:
+            raise ValueError(
+                f"Invalid exam type: {exam_type}!"
+            )
+
+        try:
+            if int(exam_year) < 1989 or int(exam_year) > 2025:
+                raise ValueError(
+                    f"Invalid exam year: {exam_year}! "
+                    "Exam year must be between 1989 and 2025"
+                )
+        except ValueError:
+            raise TypeError(
+                f"Invalid year input: {exam_year}!"
+            )
+
+        return subject, exam_year, exam_type, question_type
 
     def fetch_past_questions(
         self,
@@ -56,6 +79,13 @@ class MySchoolNGScraper:
         exam_type: str = "waec",
         question_type: str = "theory"
     ) -> QuestionLike:
+
+        subject, exam_year, exam_type, question_type = self._validate(
+            subject=subject,
+            exam_year=exam_year,
+            exam_type=exam_type,
+            question_type=question_type
+        )
 
         base_url = f"https://myschool.ng/classroom/{subject}"
         params = {
