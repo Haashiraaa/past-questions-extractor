@@ -5,15 +5,14 @@
 import logging
 import requests
 from bs4 import BeautifulSoup
-from typing import List, Dict, Union, Optional, Tuple
+from typing import List, Optional, Tuple
 from datetime import datetime
 from haashi_pkg.utility import Logger
-from questions_engine.subjects import Subjects
+from engine.subjects import Subjects
+from engine.aliases import QuestionLike
 
-QuestionLike = List[Dict[str, Union[str, List[str], None]]]
 
-
-class MySchoolNGScraper:
+class QuestionsScraper:
 
     def __init__(self, logger: Optional[Logger] = None) -> None:
 
@@ -27,7 +26,7 @@ class MySchoolNGScraper:
             ),
             "Accept-Language": "en-US,en;q=0.9",
         }
-        self.stored_questions: QuestionLike = []
+        self.stored_questions: List[QuestionLike] = []
 
     def _validate(
         self,
@@ -80,9 +79,8 @@ class MySchoolNGScraper:
         exam_year: str,
         exam_type: str = "waec",
         question_type: str = "theory"
-    ) -> QuestionLike:
+    ) -> None:
 
-        self.stored_questions = []
         subject, exam_year, exam_type, question_type = self._validate(
             subject=subject,
             exam_year=exam_year,
@@ -164,5 +162,3 @@ class MySchoolNGScraper:
                     "images": images,
                     "answer_link": answer_link
                 })
-
-        return self.stored_questions
