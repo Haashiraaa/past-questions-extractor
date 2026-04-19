@@ -136,6 +136,7 @@ class QuestionsScraper:
                     strip=True) if number_tag else None
 
                 question_tag = q.select_one(".question-desc")
+                print(question_tag)
                 question = (
                     question_tag.get_text("\n", strip=True)
                     if question_tag else None
@@ -151,6 +152,18 @@ class QuestionsScraper:
                         for img in imgs
                     ]
 
+                table_data = []
+                if question_tag:
+                    table = question_tag.find("table")
+                    if table:
+                        for tr in table.find_all("tr"):
+                            row = [
+                                td.get_text(strip=True)
+                                or "_" for td in tr.find_all("td")
+                            ]
+                            if row:
+                                table_data.append(row)
+
                 answer_link_tag = q.select_one("a.btn-outline-danger")
                 answer_link = answer_link_tag["href"] if answer_link_tag else None
 
@@ -160,5 +173,6 @@ class QuestionsScraper:
                     "number": number,
                     "question": question,
                     "images": images,
+                    "table": table_data,
                     "answer_link": answer_link
                 })

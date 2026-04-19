@@ -2,24 +2,28 @@
 
 # telegram.py
 
+import re
 import logging
 import requests
-from typing import Optional, Dict, Union
+from typing import Optional, Dict, Union, cast, List
 from haashi_pkg.utility import Logger
+from engine.config.settings import Settings
+from engine.aliases import QuestionLike
 
 
-class QuestionsTelegramBot:
+class TelegramBot:
 
     def __init__(
         self,
-        bot_token: str,
-        chat_id: str,
+        settings: Optional[Settings] = None,
         logger: Optional[Logger] = None
     ) -> None:
 
+        self.settings = settings or Settings()
         self.logger = logger or Logger(level=logging.INFO)
-        self.bot_token = bot_token
-        self.chat_id = chat_id
+        self.bot_token = cast(str, self.settings.TG_BOT_TOKEN)
+        self.chat_id = cast(str, self.settings.TG_CHAT_ID)
+
         self.msg_url = (
             f"https://api.telegram.org/bot{self.bot_token}/sendMessage"
         )
@@ -27,44 +31,48 @@ class QuestionsTelegramBot:
             f"https://api.telegram.org/bot{self.bot_token}/sendPhoto"
         )
 
-    def send_message_without_image(self, message: str) -> None:
+    def _escape_markdownv2(self, text: str) -> str:
+        escape_chars = r'_*[]()~`>#+-=|{}.!\\'
+        return re.sub(f'([{re.escape(escape_chars)}])', r'\\\1', text)
+
+    def _send_message_without_image(self, message: str) -> None:
 
         payload: Dict[str, Union[str, None]] = {
             "chat_id": self.chat_id,
-            "caption": message,
-            "parse_mode": "HTML"
+            "text": self._escape_markdownv2(message),
+            "parse_mode": "MarkdownV2"
         }
 
         try:
             response = requests.post(self.msg_url, data=payload)
-            self.logger.debug(f"Response: {response.status_code}")
+            self.logger.debug(f"Status: {response.status_code}")
+            self.logger.debug(f"Response: {response.json()}")
         except requests.exceptions.RequestException as e:
             raise Exception(f"Failed to send message: {e}")
 
-    def send_message_with_image(
+    def _send_message_with_image(
         self,
         message: str,
-        item: Dict[str, Union[str, None]],
+        question: QuestionLike,
     ) -> None:
 
-        payload: Dict[str, Union[str, None]] = {
+        payload: Dict[str, Union[str, None, List[str]]] = {
             "chat_id": self.chat_id,
-            "photo": item.get("image"),  # scraped image URL
-            "caption": message,
-            "parse_mode": "HTML"
+            "photo": question.get("image"),  # scraped image URL
+            "text": self._escape_markdownv2(message),
+            "parse_mode": "MarkdownV2"
         }
 
         try:
             response = requests.post(self.img_url, data=payload)
-            self.logger.debug(f"Response: {response.status_code}")
+            self.logger.debug(f"Status: {response.status_code}")
+            self.logger.debug(f"Response: {response.json()}")
         except requests.exceptions.RequestException as e:
             raise Exception(f"Failed to send message: {e}")
 
-    def send_message(
-        self, message: str, item: Dict[str, Union[str, None]]
-    ) -> None:
+    def send_message(self, message: str, question: QuestionLike) -> None:
 
-        if item.get("image"):
-            self.send_message_with_image(message, item)
+        if question.get("image"):
+            self._send_message_with_image(message, question)
         else:
-            self.send_message_without_image(message)
+            self._send_message_without_image(message)
