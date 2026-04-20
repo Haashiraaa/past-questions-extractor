@@ -9,6 +9,8 @@ from typing import Optional, Dict, Union, cast, List
 from haashi_pkg.utility import Logger
 from engine.config.settings import Settings
 from engine.aliases import QuestionLike
+from engine.table_renderer import render_table
+from io import BytesIO
 
 
 class TelegramBot:
@@ -70,7 +72,25 @@ class TelegramBot:
         except requests.exceptions.RequestException as e:
             raise Exception(f"Failed to send message: {e}")
 
+    def _send_table(self, question: QuestionLike) -> None:
+
+        table = render_table(cast(List[List[str]], question.get("table")))
+        payload: Dict[str, Union[str, BytesIO]] = {
+            "chat_id": self.chat_id,
+            "photo": table
+        }
+
+        try:
+            response = requests.post(self.img_url, data=payload)
+            self.logger.debug(f"Status: {response.status_code}")
+            self.logger.debug(f"Response: {response.json()}")
+        except requests.exceptions.RequestException as e:
+            raise Exception(f"Failed to send message: {e}")
+
     def send_message(self, message: str, question: QuestionLike) -> None:
+
+        if question.get("table"):
+            self._send_table(question)
 
         if question.get("image"):
             self._send_message_with_image(message, question)

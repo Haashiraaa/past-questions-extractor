@@ -32,13 +32,13 @@ def main(logger: Logger = Logger(level=logging.DEBUG)) -> None:
     subjects = ["-".join(sub.split()).lower() for sub in subjects]
 
     # for year in years:
-    # for subject in subjects[0:2]:
-    scraper.fetch_past_questions(subject=subjects[1], exam_year=years[0])
+    for subject in subjects[0:2]:
+        scraper.fetch_past_questions(subject=subject, exam_year=years[0])
 
     for question in scraper.stored_questions:
         message = QuestionsFormatter.format_question(question)
         # logger.info(message)
-        # bot.send_message(message=message, question=question)
+        bot.send_message(message=message, question=question)
 
 
 if __name__ == "__main__":

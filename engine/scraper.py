@@ -136,7 +136,6 @@ class QuestionsScraper:
                     strip=True) if number_tag else None
 
                 question_tag = q.select_one(".question-desc")
-                print(question_tag)
                 question = (
                     question_tag.get_text("\n", strip=True)
                     if question_tag else None
@@ -145,6 +144,7 @@ class QuestionsScraper:
                 images: List[str] = []
                 if question_tag:
                     imgs = question_tag.find_all("img")
+                    print(imgs)
                     images = [
                         str(img["src"])
                         if str(img["src"]).startswith("http")
