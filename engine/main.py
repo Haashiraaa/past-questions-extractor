@@ -4,15 +4,15 @@
 
 import logging
 from haashi_pkg.utility import Logger
-from engine.scraper import QuestionsScraper
-from engine.formatter import QuestionsFormatter
-from engine.telegram import TelegramBot
+from engine.scraper.myschool import MySchoolNGScraper
+from engine.delivery.formatter import QuestionsFormatter
+from engine.delivery.telegram.bot import TelegramBot
 from engine.config.settings import Settings
 
 
 def main(logger: Logger = Logger(level=logging.DEBUG)) -> None:
 
-    scraper = QuestionsScraper()
+    scraper = MySchoolNGScraper(logger=logger)
     settings = Settings()
     bot = TelegramBot(settings=settings, logger=logger)
 

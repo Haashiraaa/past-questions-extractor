@@ -3,7 +3,7 @@
 # formatter.py
 
 from typing import cast
-from engine.aliases import QuestionLike
+from engine.models.aliases import QuestionLike
 
 
 class QuestionsFormatter:

@@ -1,23 +1,23 @@
 
 
-# scraper.py
+# myschool.py
 
 import logging
 import requests
 from bs4 import BeautifulSoup
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, cast
 from datetime import datetime
 from haashi_pkg.utility import Logger
 from engine.subjects import Subjects
-from engine.aliases import QuestionLike
+from engine.models.aliases import QuestionLike
 
 
-class QuestionsScraper:
+class MySchoolNGScraper:
 
     def __init__(self, logger: Optional[Logger] = None) -> None:
 
         self.logger = logger or Logger(level=logging.INFO)
-        self.base_domain: str = "https://myschool.ng/"
+        self.base_domain: str = "https://myschool.ng"
         self.headers = {
             "User-Agent": (
                 "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
@@ -66,10 +66,11 @@ class QuestionsScraper:
                     f"Invalid exam year: {exam_year}! "
                     f"Exam year must be between 1989 and {current_year}"
                 )
-        except ValueError:
-            raise TypeError(
-                f"Invalid year input: {exam_year}!"
-            )
+        except TypeError:
+            raise TypeError(f"Invalid year input: {exam_year}!")
+
+        except Exception as e:
+            raise Exception(f"Error: {e}")
 
         return subject, exam_year, exam_type, question_type
 
@@ -88,7 +89,7 @@ class QuestionsScraper:
             question_type=question_type
         )
 
-        base_url = f"https://myschool.ng/classroom/{subject}"
+        base_url = f"{self.base_domain}/classroom/{subject}"
         params = {
             "exam_type": f"{exam_type}",
             "exam_year": f"{exam_year}",
@@ -141,28 +142,15 @@ class QuestionsScraper:
                     if question_tag else None
                 )
 
-                images: List[str] = []
+                images: List[Optional[str]] = []
                 if question_tag:
                     imgs = question_tag.find_all("img")
-                    print(imgs)
                     images = [
                         str(img["src"])
                         if str(img["src"]).startswith("http")
                         else self.base_domain + str(img["src"])
                         for img in imgs
                     ]
-
-                table_data = []
-                if question_tag:
-                    table = question_tag.find("table")
-                    if table:
-                        for tr in table.find_all("tr"):
-                            row = [
-                                td.get_text(strip=True)
-                                or "_" for td in tr.find_all("td")
-                            ]
-                            if row:
-                                table_data.append(row)
 
                 answer_link_tag = q.select_one("a.btn-outline-danger")
                 answer_link = answer_link_tag["href"] if answer_link_tag else None
@@ -173,6 +161,5 @@ class QuestionsScraper:
                     "number": number,
                     "question": question,
                     "images": images,
-                    "table": table_data,
-                    "answer_link": answer_link
+                    "answer_link": cast(Optional[str], answer_link)
                 })
